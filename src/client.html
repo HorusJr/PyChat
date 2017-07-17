@@ -1,0 +1,32 @@
+<!doctype html>
+
+<html>
+
+<body>
+  <h3>Websocket Chat</h3>
+  <ul id="list"></ul>
+  <script>
+    let server = "ws://localhost:3000"
+
+    let socket = new WebSocket(server);
+    let name = "";
+
+    while(name == "") {
+      name = prompt("Name?", "")
+    }
+
+    socket.onopen = function(event) {
+      socket.send(name);
+      alert("Connected to " + server);
+    }
+
+    socket.onmessage = function(event) {
+      let item = document.createElement("li");
+      item.innerHTML = event.data;
+      document.getElementById("list").appendChild(item);
+    }
+
+  </script>
+</body>
+
+</html>
