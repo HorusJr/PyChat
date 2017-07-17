@@ -10,16 +10,20 @@ async def handler(websocket, path):
     print(websocket)
     # Register
     connected.add(websocket)
-    size = len(s)
+    connected = True
 
-    while True:
+    while connected:
+        size = len(connected)
         try:
             # Implement logic here.
-            await asyncio.wait([ws.send("Ping: " + size) for ws in connected])
+            print("Ping: " + str(size))
+            await asyncio.wait([ws.send("Ping: " + str(size)) for ws in connected])
             await asyncio.sleep(15)
-        finally:
-            print("next")
-
+        except ConnectionClosed:
+            connected = False
+        except:
+            raise
+            
     connected.remove(websocket)
 
 start_server = websockets.serve(handler, '10.0.1.77', 80, timeout=100) #put the server's local ip in here
