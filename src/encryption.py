@@ -24,6 +24,10 @@ def RSA_decrypt(sk,message):
 
 def generate_RSA_keypair():
     '''Generates an RSA public/secret key pair and returns a list [pk,sk]'''
+    #to send the public key information to the server, extract the information
+    #with pk.n and pk.e
+    
+    #to initialize a public key from n and e, use RSA.construct((n,e))
     
     random_generator = Random.new().read
     sk = RSA.generate(1024, random_generator)
