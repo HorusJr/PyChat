@@ -4,7 +4,7 @@ from Crypto import Random
 def RSA_encrypt(pk,message):
     '''Encrypts the string message with the public key pk.
     
-    Preconditions: pk is an RSA public-key object, message is a string with size less than 128 bytes'''
+    Preconditions: pk is an RSA public-key object, message is a string with size up to than 128 bytes'''
     
     if type(message) == str:
         message = message.encode('utf-8')           #RSA can only encrypt bytes
@@ -30,3 +30,49 @@ def generate_RSA_keypair():
     pk = sk.publickey()
     
     return [pk,sk]
+
+def long_RSA_encrypt(pk,message):
+    '''Encyrpts the string message with the public key pk.
+    
+    The string message may be of any size.  To acccommodate this, message will be encrypted in 128-character chunks,
+    and the encrypted chunks will be concatenated and returned.
+    
+    Preconditions: pk is an RSA public-key object, message is a string'''
+    
+    #breaking the message up:
+    msg_parts = []
+    
+    while len(message)>128:
+        msg_part = message[:128]
+        msg_parts.append(msg_part)
+        message = message[128:]
+    msg_parts.append(message)
+    
+    #encrypting each chunk:
+    output = b''
+    for msg in msg_parts:
+        output = output + RSA_encrypt(pk,msg)
+    
+    return output
+
+def long_RSA_decrypt(sk,message):
+    '''Decrypts the string message with the public key pk.
+    
+    This function will decode message encrypted with either RSA_encrypt or long_RSA_encrypt
+    
+    Preconditions: sk is an RSA key object, message is encrypted with sk's corresponding pk'''
+    
+    #breaking up the message:
+    msg_parts = []
+    
+    while len(message) != 0:
+        msg_part = message[:128]
+        msg_parts.append(msg_part)
+        message = message[128:]
+    
+    #decrypting each chunk:
+    output = ''
+    for msg in msg_parts:
+        output = output + RSA_decrypt(sk,msg)
+    
+    return output
