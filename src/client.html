@@ -6,13 +6,13 @@
   <h3>Websocket Chat</h3>
   <ul id="list"></ul>
   <script>
-    let server = "ws://localhost:3000"
+    let server = "ws://71.68.222.92:80";
 
     let socket = new WebSocket(server);
     let name = "";
 
     while(name == "") {
-      name = prompt("Name?", "")
+      name = prompt("Name?", "");
     }
 
     socket.onopen = function(event) {
