@@ -8,7 +8,7 @@ clients = {}
 
 async def handler(websocket, path):
     print('New client', websocket)
-    print(' ({} existing clients)'.format(len(clients)))
+    print(' ({} previous clients)'.format(len(clients)))
 
     # first line from client is client name
     name = await websocket.recv()
