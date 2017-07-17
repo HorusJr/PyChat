@@ -7,6 +7,7 @@ connected = set()
 
 async def handler(websocket, path):
     global connected
+    print(websocket)
     # Register.
     connected.add(websocket)
     try:
@@ -17,7 +18,7 @@ async def handler(websocket, path):
         # Unregister.
         connected.remove(websocket)
 
-start_server = websockets.serve(hello, '10.0.1.77', 80) #put the server's local ip in here
+start_server = websockets.serve(handler, '10.0.1.77', 80, timeout=100) #put the server's local ip in here
 
 asyncio.get_event_loop().run_until_complete(start_server)
 print('Server started...')
