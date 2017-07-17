@@ -3,13 +3,19 @@
 import asyncio
 import websockets
 
-async def hello(websocket, path):
-    name = await websocket.recv()
-    print("< {}".format(name))
+connected = set()
 
-    greeting = "Hello {}!".format(name)
-    await websocket.send(greeting)
-    print("> {}".format(greeting))
+async def handler(websocket, path):
+    global connected
+    # Register.
+    connected.add(websocket)
+    try:
+        # Implement logic here.
+        await asyncio.wait([ws.send("Hello!") for ws in connected])
+        await asyncio.sleep(10)
+    finally:
+        # Unregister.
+        connected.remove(websocket)
 
 start_server = websockets.serve(hello, '10.0.1.77', 80) #put the server's local ip in here
 
