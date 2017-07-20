@@ -1,39 +1,35 @@
-#!/usr/bin/env python
+import socket
+import sys
 
-import asyncio
-import websockets
-import logging
+# Create a TCP/IP socket
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-clients = {}
+# Bind the socket to the port
+server_address = ('localhost', 10000)
+print("Starting up on {0}:{1}".format(*server_address))
+sock.bind(server_address)
 
-async def handler(websocket, path):
-    print('New client', websocket)
-    print(' ({} previous clients)'.format(len(clients)))
+# Listen for incoming connections
+sock.listen(1)
 
-    # first line from client is client name
-    name = await websocket.recv()
-    await websocket.send('Welcome to the chatroom, {}'.format(name))
-    await websocket.send('Users: {}'.format(list(clients.values())))
-    clients[websocket] = name
-    for client, _ in clients.items():
-        await client.send(name + ' has joined the chat')
+while True:
+    # Wait for a connection
+    print("Waiting for a connection")
+    connection, client_address = sock.accept()
 
-    while True:
-        message = await websocket.recv()
-        if message is None:
-            their_name = clients[websocket]
-            del clients[websocket]
-            print('Client closed connection', websocket)
+    try:
+        print("Connection from {}".format(client_address))
 
-            for client, _ in clients.items():
-                await client.send(their_name + ' has let the chat')
-            break
+        # Receive the data in small chunks and retransmit it
+        while True:
+            data = connection.recv(16)
+            print("Received {}".format(data.decode()))
+            if data:
+                print("Sending data back to the client")
+                connection.sendall(data)
+            else:
+                print("No more data from {}".format(client_address))
+                break
 
-        for client, _ in clients.items():
-            await client.send('{}: {}'.format(name, message))
-
-start_server = websockets.serve(handler, 'localhost', 3000, timeout=100) #put the server's local ip in here
-
-asyncio.get_event_loop().run_until_complete(start_server)
-print('Server started')
-asyncio.get_event_loop().run_forever()
+    finally:
+        connection.close()
