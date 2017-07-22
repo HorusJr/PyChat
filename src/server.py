@@ -1,35 +1,46 @@
 import socket
 import sys
+import threading
 
-# Create a TCP/IP socket
+def broadcast(message):
+    global clients
+    for connection in clients:
+        connection.sendall(message)
+
+def handle_client(connection, client_address):
+    global clients
+    print("Connection from {}".format(client_address))
+
+    try:
+        name = connection.recv(16)
+        clients[connection] = name
+        connection.sendall("Welcome, {0}".format(name))
+    except:
+        #connection.close()
+        pass
+
+    # Receive the data in small chunks and retransmit it
+    while True:
+        data = connection.recv(16)
+        if not data:
+            break
+        print("\nReceived {}".format(data.decode()))
+        print("Broadcasting")
+        #connection.sendall(data)
+        broadcast(data)
+
+    connection.close()
+    print("No more data from {}".format(client_address))
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Bind the socket to the port
 server_address = ('localhost', 10000)
 print("Starting up on {0}:{1}".format(*server_address))
 sock.bind(server_address)
 
-# Listen for incoming connections
 sock.listen(1)
+clients = {}
 
 while True:
-    # Wait for a connection
     print("Waiting for a connection")
     connection, client_address = sock.accept()
-
-    try:
-        print("Connection from {}".format(client_address))
-
-        # Receive the data in small chunks and retransmit it
-        while True:
-            data = connection.recv(16)
-            print("Received {}".format(data.decode()))
-            if data:
-                print("Sending data back to the client")
-                connection.sendall(data)
-            else:
-                print("No more data from {}".format(client_address))
-                break
-
-    finally:
-        connection.close()
+    threading.Thread(target = handle_client, args = (connection, client_address,)).start()
