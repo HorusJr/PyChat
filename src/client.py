@@ -7,6 +7,14 @@ def add_input(input_queue):
     while True:
         input_queue.put(sys.stdin.read(1))
 
+def get_message():
+    while True:
+        try:
+            print(receive().decode())
+        except ConnectionError:
+            print("GET_MESSAGE SOCKET CLOSED")
+            break
+
 def receive():
     global sock
 
@@ -46,6 +54,10 @@ input_thread = threading.Thread(target=add_input, args=(input_queue,))
 input_thread.daemon = True
 input_thread.start()
 
+receive_thread = threading.Thread(target=get_message)
+receive_thread.daemon = True
+receive_thread.start()
+
 while True:
     # Send data
     try:
@@ -53,14 +65,12 @@ while True:
 
         while not input_queue.empty():
             message += input_queue.get()
-            print("Message: " + message)
 
-        print("Sending: {}".format(message))
+        #print("Sending: {}".format(message))
 
         if(message != ""):
             send(message.encode())
 
-        print(receive().decode())
     except ConnectionError:
         break
 
