@@ -48,7 +48,7 @@ def handle_client(connection, client_address):
         try:
             message = receive(connection)
             print("\nReceived {}".format(message.decode()))
-            broadcast((name + ": " + message.decode()).encode())
+            broadcast(connection, (name + ": " + message.decode()).encode())
             send(connection, (name + ": " + message.decode()).encode())
         except ConnectionError:
             break
