@@ -21,14 +21,18 @@ def receive(connection, privk=None):
         os._exit(0)
 
     if privk:
-        #print(message)
-        return RSA_decrypt(privk, message).encode()
+        decrypted = RSA_decrypt(privk, message).encode()
+        if decrypted.decode()[8] == '?':
+            return message
+        else:
+            return decrypted
     else:
         return message
 
 def send(connection, message, pubk=None):
     if pubk:
-        if len(message) <= 128:
+        if len(message) <= 120:
+            print(message.decode())
             encrypted = RSA_encrypt(pubk, message.decode())
             connection.sendall(str(len(encrypted)).zfill(3).encode())
             connection.sendall(encrypted)
@@ -48,10 +52,13 @@ def add_input(input_queue):
 def get_message(sock, privk):
     while True:
         try:
-            print(receive(sock, privk).decode())
+            message = receive(sock, privk)
+            print(message.decode().strip())
         except ConnectionError:
             print("GET_MESSAGE SOCKET CLOSED")
             os._exit(0)
+        except UnicodeDecodeError:
+            print(message)
 
 print("Generating keys...")
 pubk, privk = generate_RSA_keypair()
@@ -61,8 +68,8 @@ if input("Server? (1 or 0): ").strip() == "1":
     print("Server\n")
 
     sock = socket.socket()
-    #server_address = (input("IP: "), int(input("Port: ")))
-    server_address = ("localhost", 80)
+    server_address = (input("IP: "), int(input("Port: ")))
+    #server_address = ("localhost", 80)
     print("\nStarting server on {0}:{1}".format(*server_address))
     sock.bind(server_address)
 
@@ -107,10 +114,14 @@ if input("Server? (1 or 0): ").strip() == "1":
             while not input_queue.empty():
                 message += input_queue.get()
 
-            if(message != ""):
-                send(connection, message.encode(), cpubk)
+            if message != "":
+                send(connection, ("Server: " + message).encode(), cpubk)
 
         except ConnectionError:
+            break
+
+        if threading.active_count() < 3:
+            raise Exception("One of the threads broke")
             break
 
     print("Connection ended, closing server")
@@ -120,8 +131,8 @@ else:
     print("Client\n")
 
     sock = socket.socket()
-    #server_address = None
-    server_address = ("localhost", 80)
+    server_address = None
+    #server_address = ("localhost", 80)
     while not server_address:
         potential = (input("IP: "), int(input("Port: ")))
         if input("\nYou entered {0}:{1}\nType 'yes' to confirm: ".format(*potential)).strip() == 'yes':
@@ -163,9 +174,13 @@ else:
                 message += input_queue.get()
 
             if(message != ""):
-                send(sock, message.encode(), cpubk)
+                send(sock, ("Client: " + message).encode(), cpubk)
 
         except ConnectionError:
+            break
+
+        if threading.active_count() < 3:
+            raise Exception("One of the threads broke")
             break
 
     print("Connection ended, closing client")
