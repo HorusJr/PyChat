@@ -58,7 +58,7 @@ def handle_client(connection, client_address):
     print("No more data from {}".format(client_address))
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('localhost', 10000)
+server_address = ('10.0.1.77', 80)
 print("Starting up on {0}:{1}".format(*server_address))
 sock.bind(server_address)
 
