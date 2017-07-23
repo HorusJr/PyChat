@@ -42,7 +42,7 @@ def send(message):
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #server_address = (input("IP Address: "), int(input("Port: ")))
-server_address = ("71.68.222.92", 80)
+server_address = (input("Address? "), input("Port? "))
 print("Connecting to {0}:{1}\n".format(*server_address))
 sock.connect(server_address)
 
