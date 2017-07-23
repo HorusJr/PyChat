@@ -1,44 +1,52 @@
 import socket
 import sys
 
-def receive(sock, amount_expected):
-    # Look for the response
-    amount_received = 0
-    amount_expected = len(message)
+def receive():
+    global sock
 
-    data = b''
-    while amount_received < amount_expected:
-        data += sock.recv(16)
-        amount_received += len(data)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Get size of incoming message
+    message = sock.recv(3)
+    if not message:
+        raise ConnectionError("Connection ended")
 
-    return data
+    remaining = int(message.decode())
+    message = ""
+    while remaining > 0:
+        message += sock.recv(min(remaining, 16)).decode()
+        remaining -= 16
 
-server_address = (input("IP Address: "), int(input("Port: ")))
+    return message.encode()
+
+def send(message):
+    global sock
+
+    if(len(message) <= 999):
+        sock.sendall(str(len(message.decode())).zfill(3).encode())
+        sock.sendall(message)
+    else:
+        raise ValueError("Size of message sent is over 999")
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#server_address = (input("IP Address: "), int(input("Port: ")))
+server_address = ("localhost", 10000)
 print("Connecting to {0}:{1}\n".format(*server_address))
 sock.connect(server_address)
 
-name = input("Name: ")
-sock.sendall(name.encode())
+send(input("Name: ").encode())
+print(receive().decode())
 
 while True:
     # Send data
-    message = input("Message: ")
-    print("Sending: {}".format(message))
-    sock.sendall(message.encode())
+    try:
+        message = input("Message: ")
+        #print("Sending: {}".format(message))
+        send(message.encode())
+        print(receive().decode())
+    except ConnectionError:
+        break
 
-    # Look for the response
-    amount_received = 0
-    amount_expected = len(message)
-
-    data = b''
-    while amount_received < amount_expected:
-        data += sock.recv(16)
-        amount_received += len(data)
-    print("Received: {}".format(receive(sock, ))
-
-    print("Closing socket")
-    sock.close()
+print("Closing socket")
+sock.close()
 
 # First send name
 # Then join chatroom

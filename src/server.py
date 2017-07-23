@@ -2,34 +2,59 @@ import socket
 import sys
 import threading
 
-def broadcast(message):
+def receive(connection):
+    message = connection.recv(3)
+    if not message:
+        raise ConnectionError("Connection ended")
+
+    remaining = int(message.decode())
+    message = ""
+    while remaining > 0:
+        message += connection.recv(min(remaining, 16)).decode()
+        remaining -= 16
+
+    return message.encode()
+
+def send(connection, message):
+    if(len(message) <= 999):
+        connection.sendall(str(len(message.decode())).zfill(3).encode())
+        connection.sendall(message)
+    else:
+        raise ValueError("Size of message sent is over 999")
+
+def broadcast(sender, message):
     global clients
     for connection in clients:
-        connection.sendall(message)
+        if connection != sender:
+            send(connection, message)
 
-def handle_client(connection, client_address):
+def greeting(connection):
     global clients
     print("Connection from {}".format(client_address))
 
-    try:
-        name = connection.recv(16)
-        clients[connection] = name
-        connection.sendall("Welcome, {0}".format(name))
-    except:
-        #connection.close()
-        pass
+    name = receive(connection).decode()
+    clients[connection] = name
+    send(connection, "Welcome, {0}".format(name).encode())
+
+def handle_client(connection, client_address):
+    print("Connection from {}".format(client_address))
+
+    name = receive(connection).decode()
+    clients[connection] = name
+    send(connection, "Welcome, {0}".format(name).encode())
 
     # Receive the data in small chunks and retransmit it
     while True:
-        data = connection.recv(16)
-        if not data:
+        try:
+            message = receive(connection)
+            print("\nReceived {}".format(message.decode()))
+            broadcast((name + ": " + message.decode()).encode())
+            send(connection, (name + ": " + message.decode()).encode())
+        except ConnectionError:
             break
-        print("\nReceived {}".format(data.decode()))
-        print("Broadcasting")
-        #connection.sendall(data)
-        broadcast(data)
 
     connection.close()
+    del clients[connection]
     print("No more data from {}".format(client_address))
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
