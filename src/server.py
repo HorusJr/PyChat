@@ -66,6 +66,7 @@ sock.listen(1)
 clients = {}
 
 while True:
-    print("Waiting for a connection")
-    connection, client_address = sock.accept()
-    threading.Thread(target = handle_client, args = (connection, client_address,)).start()
+    if(threading.active_count() < 64):
+        print("Waiting for a connection")
+        connection, client_address = sock.accept()
+        threading.Thread(target = handle_client, args = (connection, client_address,)).start()
