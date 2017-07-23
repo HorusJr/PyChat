@@ -1,5 +1,11 @@
 import socket
 import sys
+import queue
+import threading
+
+def add_input(input_queue):
+    while True:
+        input_queue.put(sys.stdin.read(1))
 
 def receive():
     global sock
@@ -28,19 +34,32 @@ def send(message):
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #server_address = (input("IP Address: "), int(input("Port: ")))
-server_address = ("localhost", 10000)
+server_address = ("71.68.222.92", 80)
 print("Connecting to {0}:{1}\n".format(*server_address))
 sock.connect(server_address)
 
 send(input("Name: ").encode())
 print(receive().decode())
 
+input_queue = queue.Queue()
+input_thread = threading.Thread(target=add_input, args=(input_queue,))
+input_thread.daemon = True
+input_thread.start()
+
 while True:
     # Send data
     try:
-        message = input("Message: ")
-        #print("Sending: {}".format(message))
-        send(message.encode())
+        message = ""
+
+        while not input_queue.empty():
+            message += input_queue.get()
+            print("Message: " + message)
+
+        print("Sending: {}".format(message))
+
+        if(message != ""):
+            send(message.encode())
+
         print(receive().decode())
     except ConnectionError:
         break
