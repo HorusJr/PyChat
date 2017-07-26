@@ -32,7 +32,7 @@ def receive(connection, privk=None):
 def send(connection, message, pubk=None):
     if pubk:
         if len(message) <= 120:
-            print(message.decode())
+            print(message.decode().strip())
             encrypted = RSA_encrypt(pubk, message.decode())
             connection.sendall(str(len(encrypted)).zfill(3).encode())
             connection.sendall(encrypted)
